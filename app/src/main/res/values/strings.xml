@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Eventos</string>
+    <string name="errorRequest">Não foi possível completar a solicitação.\nVerifique se você está conectado à internet ou tente novamente.</string>
+    <string name="retryAgain">Tentar novamente.</string>
+    <string name="eventDateLabel">Data:</string>
+    <string name="eventPriceLabel">Preço:</string>
+    <string name="eventLocaleLabel"><u>Ver a localização no mapa</u></string>
+    <string name="textCheckIn">CheckIn</string>
+    <string name="textShare">Compartilhar</string>
+    <string name="textName">Nome</string>
+    <string name="textEmail">E-mail</string>
+    <string name="textCancel">Cancelar</string>
+
+    <string name="textSuccess">Sucesso</string>
+    <string name="textError">Erro</string>
+    <string name="textCheckInSuccess">CheckIn realizado com sucesso.</string>
+    <string name="textCheckInError">Não foi possível realizar o checkIn.</string>
+    <string name="textButtonOk">OK</string>
+</resources>
