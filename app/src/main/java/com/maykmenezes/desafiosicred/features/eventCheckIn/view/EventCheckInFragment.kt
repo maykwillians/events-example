@@ -5,15 +5,16 @@ import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import androidx.fragment.app.Fragment
 import com.maykmenezes.desafiosicred.R
 import com.maykmenezes.desafiosicred.features.eventCheckIn.di.EventCheckInModule.eventCheckInModule
+import com.maykmenezes.desafiosicred.util.ui.ScreenStatus
 import kotlinx.android.synthetic.main.fragment_event_check_in.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.context.loadKoinModules
-import org.koin.core.context.unloadKoinModules
 
 private const val EVENT_ID = "event_id"
 
@@ -24,11 +25,11 @@ class EventCheckInFragment : Fragment() {
 
     companion object {
         fun newInstance(eventId: String) =
-                EventCheckInFragment().apply {
-                    arguments = Bundle().apply {
-                        putString(EVENT_ID, eventId)
-                    }
+            EventCheckInFragment().apply {
+                arguments = Bundle().apply {
+                    putString(EVENT_ID, eventId)
                 }
+            }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,10 +41,10 @@ class EventCheckInFragment : Fragment() {
     }
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?): View? =
-            inflater.inflate(R.layout.fragment_event_check_in, container, false)
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?): View? =
+        inflater.inflate(R.layout.fragment_event_check_in, container, false)
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
@@ -53,16 +54,16 @@ class EventCheckInFragment : Fragment() {
 
     private fun observeDataChanges() {
         viewModel.run {
-            checkInDialogResultLiveData.observe(requireActivity(), {
-                showResultCheckInDialog(it.first, it.second, it.third)
+            eventCheckInLiveData.observe(viewLifecycleOwner, {
+                showResultCheckInDialog(it)
             })
-            inputNameErrorMessageLiveData.observe(requireActivity(), {
-                inputName.error = it
+            inputNameErrorMessageLiveData.observe(viewLifecycleOwner, {
+                inputName.error = resources.getString(it)
             })
-            inputEmailErrorMessageLiveData.observe(requireActivity(), {
-                inputEmail.error = it
+            inputEmailErrorMessageLiveData.observe(viewLifecycleOwner, {
+                inputEmail.error = resources.getString(it)
             })
-            screenLiveData.observe(requireActivity(), {
+            screenLiveData.observe(viewLifecycleOwner, {
                 updateScreen(it)
             })
         }
@@ -73,18 +74,28 @@ class EventCheckInFragment : Fragment() {
         inputManager.hideSoftInputFromWindow(requireView().windowToken, 0)
     }
 
-    private fun showResultCheckInDialog(title: Int, message: Int, textButton: Int) {
+    private fun showResultCheckInDialog(message: String?) {
         AlertDialog.Builder(requireActivity())
-                .setTitle(resources.getString(title))
-                .setMessage(resources.getString(message))
-                .setCancelable(false)
-                .setPositiveButton(resources.getString(textButton)) { _, _ -> }.show()
+            .setTitle(
+                if(message == null) {
+                    resources.getString(R.string.textError)
+                } else {
+                    resources.getString(R.string.textSuccess)
+                }
+            )
+            .setMessage(message ?: resources.getString(R.string.textCheckInError))
+            .setCancelable(false)
+            .setPositiveButton(resources.getString(R.string.textButtonOk)) { _, _ ->
+                content.visibility = VISIBLE
+            }.show()
     }
 
-    private fun updateScreen(screenBehavior: Pair<Int, Int>) {
+    private fun updateScreen(screenStatus: ScreenStatus) {
         hideKeyboard()
-        loading.visibility = screenBehavior.first
-        content.visibility = screenBehavior.second
+        screenStatus.run {
+            loading.visibility = loadingVisibility
+            content.visibility = contentVisibility
+        }
     }
 
     private fun setListeners() {
@@ -96,10 +107,5 @@ class EventCheckInFragment : Fragment() {
             val email = inputEmail.text.toString()
             viewModel.checkIn(eventId ?: "", name, email)
         }
-    }
-
-    override fun onDetach() {
-        super.onDetach()
-        unloadKoinModules(eventCheckInModule)
     }
 }

@@ -3,62 +3,85 @@ package com.maykmenezes.desafiosicred.features.eventCheckIn.view
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.maykmenezes.desafiosicred.features.eventCheckIn.di.EventCheckInModule.eventCheckInModule
 import com.maykmenezes.desafiosicred.features.eventCheckIn.model.request.CheckInRequest
 import com.maykmenezes.desafiosicred.features.eventCheckIn.repository.EventCheckInRepository
-import com.maykmenezes.desafiosicred.features.eventCheckIn.view.DialogCheckInResultBehavior.success
-import com.maykmenezes.desafiosicred.features.eventCheckIn.view.DialogCheckInResultBehavior.error
-import com.maykmenezes.desafiosicred.util.ui.ScreenBehavior.CommonScreenBehaviorWithoutErrorLayout.loading
-import com.maykmenezes.desafiosicred.util.ui.ScreenBehavior.CommonScreenBehaviorWithoutErrorLayout.terminated
 import com.maykmenezes.desafiosicred.util.data.emailIsInvalid
 import com.maykmenezes.desafiosicred.util.data.nameIsInvalid
-import kotlinx.coroutines.Dispatchers
+import com.maykmenezes.desafiosicred.util.ui.ScreenStatus
+import com.maykmenezes.desafiosicred.util.ui.CustomScreenStates.loading
+import com.maykmenezes.desafiosicred.util.ui.CustomScreenStates.success
+import com.maykmenezes.desafiosicred.util.ui.CustomScreenStates.unknownError
+import com.maykmenezes.desafiosicred.util.ui.CustomScreenStates.noConnectionError
+import com.maykmenezes.desafiosicred.util.ui.Strings.emailIsInvalid
+import com.maykmenezes.desafiosicred.util.ui.Strings.insertYourEmail
+import com.maykmenezes.desafiosicred.util.ui.Strings.insertYourName
+import com.maykmenezes.desafiosicred.util.ui.Strings.nameIsInvalid
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
+import org.koin.core.context.unloadKoinModules
+import java.io.IOException
 import java.lang.Exception
 
-class EventCheckInViewModel(private val repository: EventCheckInRepository) : ViewModel() {
+class EventCheckInViewModel(
+    private val repository: EventCheckInRepository,
+    private val coroutineDispatcher: CoroutineDispatcher) : ViewModel() {
 
-    val checkInDialogResultLiveData = MutableLiveData<Triple<Int, Int, Int>>()
-    val screenLiveData = MutableLiveData<Pair<Int, Int>>()
-    val inputNameErrorMessageLiveData = MutableLiveData<String>()
-    val inputEmailErrorMessageLiveData = MutableLiveData<String>()
+    val eventCheckInLiveData = MutableLiveData<String>()
+    val screenLiveData = MutableLiveData<ScreenStatus>()
+    val inputNameErrorMessageLiveData = MutableLiveData<Int>()
+    val inputEmailErrorMessageLiveData = MutableLiveData<Int>()
 
     fun checkIn(eventId: String, name: String, email: String) {
         if(inputsIsValid(name, email)) {
             screenLiveData.postValue(loading)
-            viewModelScope.launch(Dispatchers.IO) {
+            viewModelScope.launch(coroutineDispatcher) {
                 try {
                     val response = repository.checkIn(CheckInRequest(eventId, name, email))
                     if(response.isSuccessful) {
-                        checkInDialogResultLiveData.postValue(success)
-                        screenLiveData.postValue(terminated)
+                        eventCheckInLiveData.postValue(response.body())
+                        screenLiveData.postValue(success)
                     } else {
-                        checkInDialogResultLiveData.postValue(error)
-                        screenLiveData.postValue(terminated)
+                        eventCheckInLiveData.postValue(null)
+                        screenLiveData.postValue(unknownError)
                     }
                 } catch(e: Exception) {
-                    checkInDialogResultLiveData.postValue(error)
-                    screenLiveData.postValue(terminated)
+                    when(e) {
+                        is IOException -> {
+                            eventCheckInLiveData.postValue(null)
+                            screenLiveData.postValue(noConnectionError)
+                        }
+                        else -> {
+                            eventCheckInLiveData.postValue(null)
+                            screenLiveData.postValue(unknownError)
+                        }
+                    }
                 }
             }
         }
     }
 
-    private fun inputsIsValid(name: String, email: String): Boolean {
-        var inputsInValid = true
+    fun inputsIsValid(name: String, email: String): Boolean {
+        var inputsIsValid = true
         if(name.isEmpty()) {
-            inputNameErrorMessageLiveData.value = "Insira o nome"
-            inputsInValid = false
+            inputNameErrorMessageLiveData.value = insertYourName
+            inputsIsValid = false
         } else if(name.nameIsInvalid()) {
-            inputNameErrorMessageLiveData.value = "Nome inválido"
-            inputsInValid = false
+            inputNameErrorMessageLiveData.value = nameIsInvalid
+            inputsIsValid = false
         }
         if(email.isEmpty()) {
-            inputEmailErrorMessageLiveData.value = "Insira o email"
-            inputsInValid = false
+            inputEmailErrorMessageLiveData.value = insertYourEmail
+            inputsIsValid = false
         } else if(email.emailIsInvalid()) {
-            inputEmailErrorMessageLiveData.value = "Email inválido"
-            inputsInValid = false
+            inputEmailErrorMessageLiveData.value = emailIsInvalid
+            inputsIsValid = false
         }
-        return inputsInValid
+        return inputsIsValid
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        unloadKoinModules(eventCheckInModule)
     }
 }

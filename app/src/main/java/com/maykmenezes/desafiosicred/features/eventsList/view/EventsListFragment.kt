@@ -4,18 +4,21 @@ import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.GONE
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import com.maykmenezes.desafiosicred.R
 import com.maykmenezes.desafiosicred.features.eventDatails.view.EventDetailsFragment
 import com.maykmenezes.desafiosicred.features.eventsList.di.EventsListModule.eventsListModule
 import com.maykmenezes.desafiosicred.features.eventsList.model.response.EventItemResponse
 import com.maykmenezes.desafiosicred.features.eventsList.view.adapter.EventsListAdapter
+import com.maykmenezes.desafiosicred.util.ui.ScreenStatus
+import kotlinx.android.synthetic.main.error_layout.*
 import kotlinx.android.synthetic.main.fragment_events_list.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.context.loadKoinModules
-import org.koin.core.context.unloadKoinModules
 
-private const val TAG = "fragment_events_list_tag"
+private const val TAG = "fragment_events_list_tag_id"
 
 class EventsListFragment : Fragment() {
 
@@ -28,10 +31,10 @@ class EventsListFragment : Fragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?): View? =
-        inflater.inflate(R.layout.fragment_events_list, container, false)
+            inflater: LayoutInflater,
+            container: ViewGroup?,
+            savedInstanceState: Bundle?): View? =
+            inflater.inflate(R.layout.fragment_events_list, container, false)
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
@@ -41,12 +44,12 @@ class EventsListFragment : Fragment() {
 
     private fun observeDataChanges() {
         viewModel.run {
-            eventsListLiveData.observe(requireActivity(), {
+            eventsListLiveData.observe(viewLifecycleOwner, {
                 events_list.adapter = EventsListAdapter(it) { event ->
                     gotoEventDetailsScreen(event)
                 }
             })
-            screenLiveData.observe(requireActivity(), {
+            screenLiveData.observe(viewLifecycleOwner, {
                 updateScreen(it)
             })
         }
@@ -65,14 +68,13 @@ class EventsListFragment : Fragment() {
         }
     }
 
-    private fun updateScreen(screenBehavior: Triple<Int, Int, Int>) {
-        loading.visibility = screenBehavior.first
-        content.visibility = screenBehavior.second
-        error.visibility = screenBehavior.third
-    }
-
-    override fun onDetach() {
-        super.onDetach()
-        unloadKoinModules(eventsListModule)
+    private fun updateScreen(screenStatus: ScreenStatus) {
+        screenStatus.run {
+            loading.visibility = loadingVisibility
+            content.visibility = contentVisibility
+            error.visibility = errorVisibility ?: GONE
+            errorImage.setImageDrawable(ContextCompat.getDrawable(requireActivity(), errorIcon ?: R.drawable.ic_error))
+            errorDescription.text = resources.getString(errorMessage ?: R.string.errorRequest)
+        }
     }
 }

@@ -10,7 +10,9 @@ class EventsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_events)
 
-        gotoEventsListScreen()
+        if(savedInstanceState == null) {
+            gotoEventsListScreen()
+        }
     }
 
     private fun gotoEventsListScreen() {

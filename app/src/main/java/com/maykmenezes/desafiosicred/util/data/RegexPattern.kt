@@ -8,4 +8,4 @@ const val validEmailRegexPattern = "[a-zA-Z0-9\\+\\.\\_\\%\\-\\+]{1,256}" +
         "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" +
         ")+"
 
-const val validNameRegexPattern = "[a-zA-Z]{3,30}"
+const val validNameRegexPattern = "([a-zA-Z',.-]+( [a-zA-Z',.-]+)*)"

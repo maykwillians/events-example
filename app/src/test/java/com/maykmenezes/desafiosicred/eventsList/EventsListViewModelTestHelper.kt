@@ -20,5 +20,5 @@ object EventsListViewModelTestHelper {
 
     val successResponse: Response<List<EventItemResponse>> = Response.success(listOf(fakeEvent))
 
-    val errorResponse: Response<List<EventItemResponse>> = Response.error(500, "".toResponseBody("".toMediaTypeOrNull()))
+    val unknownErrorResponse: Response<List<EventItemResponse>> = Response.error(500, "".toResponseBody("".toMediaTypeOrNull()))
 }

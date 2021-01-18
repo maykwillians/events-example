@@ -8,11 +8,11 @@ import kotlinx.android.parcel.Parcelize
 data class CheckInRequest(
 
 	@field:SerializedName("eventId")
-	val eventId: String? = null,
+	val eventId: String,
 
 	@field:SerializedName("name")
-	val name: String? = null,
+	val name: String,
 
 	@field:SerializedName("email")
-	val email: String? = null
+	val email: String
 ): Parcelable

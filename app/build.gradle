@@ -4,9 +4,13 @@ plugins {
     id 'kotlin-android-extensions'
 }
 
+def keystorePropertiesFile = rootProject.file("/keystore.properties")
+def keystoreProperties = new Properties()
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
 android {
     compileSdkVersion 30
-    buildToolsVersion "30.0.2"
+    buildToolsVersion "30.0.3"
 
     defaultConfig {
         applicationId "com.maykmenezes.desafiosicred"
@@ -18,16 +22,58 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+    signingConfigs {
+
+        dev {
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+        }
+
+        qa {
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+        }
+
+        prod {
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
         }
     }
+
+    buildTypes {
+
+        debug {
+            debuggable true
+            signingConfig signingConfigs.dev
+            buildConfigField "String", "BASE_URL", "\"https://5f5a8f24d44d640016169133.mockapi.io/api/\""
+        }
+
+        qa {
+            debuggable true
+            signingConfig signingConfigs.qa
+            buildConfigField "String", "BASE_URL", "\"https://5f5a8f24d44d640016169133.mockapi.io/api/\""
+        }
+
+        release {
+            debuggable false
+            minifyEnabled true
+            signingConfig signingConfigs.prod
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField "String", "BASE_URL", "\"https://5f5a8f24d44d640016169133.mockapi.io/api/\""
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = '1.8'
     }
@@ -59,7 +105,6 @@ dependencies {
 
     /*Glide*/
     implementation 'com.github.bumptech.glide:glide:4.11.0'
-    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
     /*Test*/
     testImplementation 'junit:junit:4.13.1'
